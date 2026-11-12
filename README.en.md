@@ -4,13 +4,13 @@
   <br>
   <img src="assets/readme_logo.png" alt="VeneraNext" width="200" />
 
-  # VeneraNext
+  # VeneraNext · iPhone Duo
 
   ![Flutter](https://img.shields.io/badge/Flutter-3.41.4-02569B?logo=flutter&logoColor=white&style=flat-square)
-  [![Release](https://img.shields.io/github/v/release/CyrilPeng/venera-next?label=Release&color=10B981&style=flat-square)](https://github.com/CyrilPeng/venera-next/releases/latest)
+  [![Upstream release](https://img.shields.io/github/v/release/CyrilPeng/venera-next?label=Upstream%20release&color=10B981&style=flat-square)](https://github.com/CyrilPeng/venera-next/releases/latest)
   ![License](https://img.shields.io/badge/License-GPL--3.0-10B981?style=flat-square)
   <br>
-  [![Downloads](https://img.shields.io/github/downloads/CyrilPeng/venera-next/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=CyrilPeng&repo=venera-next)
+  [![Upstream downloads](https://img.shields.io/github/downloads/CyrilPeng/venera-next/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=CyrilPeng&repo=venera-next)
   [![Afdian](https://img.shields.io/badge/Afdian-Sponsor-ff69b4?style=flat-square)](https://ifdian.net/a/cyril)
 
   <a href="https://trendshift.io/repositories/140830?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-140830" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/140830" alt="VeneraNext repository badge on Trendshift" width="250" height="55" /></a>
@@ -23,22 +23,45 @@
 
 ---
 
+## iPhone Duo support
+
+This fork adds iPhone Duo support to [CyrilPeng/Venera-Next v1.18.3](https://github.com/CyrilPeng/Venera-Next/tree/v1.18.3). The changes are dated **November 12, 2026**. The source is available under [GPL-3.0](LICENSE).
+
+- On the folded outer display, the text navigation sits in a vertical stack at the lower right. On the unfolded display, navigation sits along the bottom in portrait. In landscape, Home uses two columns and navigation sits at the lower right.
+- The reader defaults to a side-by-side spread when unfolded in landscape and a single page when folded or in portrait. It retains your reading position when the layout changes and scales images without changing their aspect ratio.
+- The reader controls open at the bottom. The iOS file picker was updated for the new window lifecycle, and local CBZ import and reading were tested.
+
+The three layouts and the switch between one and two pages were verified in the iPhone Duo simulator. Build 250 was installed and launched on a physical iPhone Duo.
+
+### Build the Duo version from source
+
+This repository provides the source for the adaptation. The build uses **Flutter 3.41.4, Xcode 27.2, and CocoaPods** with an **iOS 15.0** deployment target. With Rustup installed, prepare the native dependencies for an iPhone device build.
+
+```sh
+rustup toolchain install 1.92.0 --profile minimal --target aarch64-apple-ios
+rustup toolchain install stable --profile minimal --target aarch64-apple-ios
+flutter pub get --enforce-lockfile
+flutter build ios --release --no-codesign
+```
+
+Connect your iPhone and open `ios/Runner.xcworkspace` in Xcode. In Runner's **Signing & Capabilities**, choose your own development team and bundle identifier. Then select the iPhone Duo and run the app. For the simulator on an Apple silicon Mac, add `aarch64-apple-ios-sim` to both Rust toolchains, start the iPhone Duo simulator, and select it when running `flutter run`.
+
 ## Introduction
 
 [VeneraNext](https://github.com/CyrilPeng/venera-next) continues development of [Venera](https://github.com/venera-app/venera), a Flutter comic reader for **Android, Android TV, iOS, Windows, Linux, and macOS**, with a **HarmonyOS beta** distributed alongside each release.
 
-This fork focuses on fewer interruptions and more reading: Waterfall mode scrolls across chapters without leaving the reader, long-pressing Favorite skips the folder picker, and nighttime and E-Ink devices get their own reading adjustments. Local import, offline downloads, reading statistics, and multi-device sync make finding comics, reading them, and following ongoing series easier.
+Upstream Venera-Next focuses on fewer interruptions and more reading: Waterfall mode scrolls across chapters without leaving the reader, long-pressing Favorite skips the folder picker, and nighttime and E-Ink devices get their own reading adjustments. Local import, offline downloads, reading statistics, and multi-device sync make finding comics, reading them, and following ongoing series easier.
 
 Venera's JavaScript extensions, local reading, search and categories, favorites, downloads, and source-dependent login, comments, and ratings remain available.
 
-**Quick links:** [Install](#download-and-installation) · [Usage](#usage-guide) · [Write a source](doc/api/comic_source.en.md) · [JavaScript API](doc/api/js.en.md) · [Changelog](CHANGELOG.md)
+**Quick links:** [Upstream downloads](#download-and-installation) · [Usage](#usage-guide) · [Write a source](doc/api/comic_source.en.md) · [JavaScript API](doc/api/js.en.md) · [Changelog](CHANGELOG.md)
 
 > [!IMPORTANT]
 > This repository maintains the reader and extension runtime. It does not provide, bundle, host, or recommend comic sources. Users must configure legal extensions themselves; content and availability depend on the corresponding extension and service.
 
 <div align="center">
   <a href="https://github.com/CyrilPeng/Venera-Next">
-    <img alt="GitHub main repository" src="https://img.shields.io/badge/GitHub-Main_repository-181717?style=for-the-badge&logo=github&logoColor=white" />
+    <img alt="GitHub upstream repository" src="https://img.shields.io/badge/GitHub-Upstream_repository-181717?style=for-the-badge&logo=github&logoColor=white" />
   </a>
   <a href="https://gitee.com/CyrilPeng/venera-next">
     <img alt="Gitee China mirror" src="https://img.shields.io/badge/Gitee-China_mirror-C71D23?style=for-the-badge&logo=gitee&logoColor=white" />
@@ -48,6 +71,8 @@ Venera's JavaScript extensions, local reading, search and categories, favorites,
 ---
 
 ## Screenshots
+
+These screenshots show the upstream Venera-Next interface.
 
 | Home: history, Read Later, and update tracking | Comic details |
 |---|---|
@@ -91,6 +116,8 @@ A fresh install creates this folder automatically (named "追更" by default). T
 ---
 
 ## Download and installation
+
+The packages in this section come from upstream Venera-Next. To get the iPhone Duo adaptation, [build the Duo version from source](#build-the-duo-version-from-source).
 
 ### Android phones and tablets
 

@@ -10,6 +10,7 @@ import 'package:venera_next/foundation/image_work.dart';
 import 'package:venera_next/features/reader/comic_image.dart';
 import 'package:venera_next/features/reader/auto_reading.dart';
 import 'package:venera_next/foundation/context.dart';
+import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/image_provider/reader_image.dart';
 
 import 'gallery_data.dart';
@@ -434,7 +435,9 @@ class GalleryModeState extends State<ReaderGalleryView>
   }
 
   Widget buildPageImages(List<int> images) {
-    Axis axis = (data.vertical) ? Axis.vertical : Axis.horizontal;
+    final axis = data.vertical && !App.isIPhoneDuo
+        ? Axis.vertical
+        : Axis.horizontal;
 
     bool reverse = data.reverse;
     if (reverse) {
@@ -491,7 +494,12 @@ class GalleryModeState extends State<ReaderGalleryView>
 
     return axis == Axis.vertical
         ? Column(children: imageWidgets)
-        : Row(children: imageWidgets);
+        : Row(
+            crossAxisAlignment: App.isIPhoneDuo
+                ? CrossAxisAlignment.stretch
+                : CrossAxisAlignment.center,
+            children: imageWidgets,
+          );
   }
 
   @override

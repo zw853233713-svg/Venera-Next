@@ -16,6 +16,10 @@ class _App {
 
   bool get isIOS => Platform.isIOS;
 
+  bool _isIPhoneDuo = false;
+
+  bool get isIPhoneDuo => _isIPhoneDuo;
+
   bool get isWindows => Platform.isWindows;
 
   bool get isLinux => Platform.isLinux;
@@ -47,6 +51,17 @@ class _App {
 
   Future<void> init() async {
     await _initVersion();
+    if (isIOS) {
+      try {
+        _isIPhoneDuo =
+            await const MethodChannel(
+              'venera/method_channel',
+            ).invokeMethod<bool>('isIPhoneDuo') ??
+            false;
+      } on MissingPluginException {
+        // Older hosts do not provide the device query.
+      }
+    }
     if (isHarmonyOS) {
       final directories = await HarmonyOS.directories();
       cachePath = directories.cache;

@@ -29,6 +29,7 @@ import 'package:venera_next/features/reader/platform_effects_controller.dart';
 import 'shell_data.dart';
 import 'progress_navigation.dart';
 import 'package:venera_next/foundation/context.dart';
+import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/features/reader/image_export.dart';
 import 'package:venera_next/features/reader/image_export_binding.dart';
 import 'package:venera_next/foundation/image_work.dart';
@@ -232,6 +233,8 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
         .map((size) => scaler.scale(size) / size)
         .fold(1.0, (largest, scale) => scale > largest ? scale : largest);
     final topBarHeight = kTopBarHeight * titleScale;
+    final bottomMenuHeight =
+        ReaderBottomBar.height + (App.isIPhoneDuo ? topBarHeight : 0);
     return TvReaderInput(
       menuOpen: _isOpen,
       contentInteractive: isOnChapterCommentsPage,
@@ -263,34 +266,49 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
             ),
           if (!isOnChapterCommentsPage) _buildInformation(),
           ReaderChapterNavigationButton(action: widget.chapterNavigation),
-          AnimatedPositioned(
-            duration: menuDuration,
-            top: _isOpen ? 0 : -(topBarHeight + context.padding.top),
-            left: 0,
-            right: 0,
-            // Insets change immediately when the native/custom frame changes.
-            // Keep content height in sync; animate only its entrance position.
-            child: SizedBox(
-              height: topBarHeight + context.padding.top,
-              child: _menuRegion(visible: _isOpen, child: buildTop()),
+          if (!App.isIPhoneDuo)
+            AnimatedPositioned(
+              duration: menuDuration,
+              top: _isOpen ? 0 : -(topBarHeight + context.padding.top),
+              left: 0,
+              right: 0,
+              // Keep the height in sync with insets during the animation.
+              child: SizedBox(
+                height: topBarHeight + context.padding.top,
+                child: _menuRegion(visible: _isOpen, child: buildTop()),
+              ),
             ),
-          ),
           AnimatedPositioned(
             duration: menuDuration,
-            bottom: _isOpen
-                ? 0
-                : -(ReaderBottomBar.height +
-                      MediaQuery.of(context).padding.bottom),
+            bottom: _isOpen ? 0 : -(bottomMenuHeight + context.padding.bottom),
             left: 0,
             right: 0,
-            child: _menuRegion(visible: _isOpen, child: buildBottom()),
+            child: _menuRegion(
+              visible: _isOpen,
+              child: App.isIPhoneDuo
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MediaQuery.removePadding(
+                          context: context,
+                          removeTop: true,
+                          child: SizedBox(
+                            height: topBarHeight,
+                            child: buildTop(),
+                          ),
+                        ),
+                        buildBottom(),
+                      ],
+                    )
+                  : buildBottom(),
+            ),
           ),
           AnimatedPositioned(
             duration: menuDuration,
             curve: Curves.easeOut,
             right: 16 + context.padding.right,
             bottom: brightnessPanelVisible
-                ? ReaderBottomBar.height + context.padding.bottom + 12
+                ? bottomMenuHeight + context.padding.bottom + 12
                 : -context.height,
             child: _menuRegion(
               visible: brightnessPanelVisible,

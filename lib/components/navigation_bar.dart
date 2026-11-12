@@ -9,6 +9,7 @@ import 'package:venera_next/foundation/app_page_route.dart';
 import 'package:venera_next/foundation/consts.dart';
 import 'package:venera_next/foundation/context.dart';
 import 'package:venera_next/foundation/edge_back_gesture.dart';
+import 'package:venera_next/foundation/iphone_duo_layout.dart';
 import 'package:venera_next/foundation/widget_utils.dart';
 
 import 'consts.dart';
@@ -204,6 +205,20 @@ class NaviPaneState extends State<NaviPane>
 
   @override
   Widget build(BuildContext context) {
+    if (App.isIPhoneDuo) {
+      return _NaviPopScope(
+        action: () {
+          final navigator = widget.navigatorKey.currentState;
+          if (navigator?.canPop() == true) {
+            navigator!.maybePop();
+          } else {
+            SystemNavigator.pop();
+          }
+        },
+        popGesture: context.width >= changePoint,
+        child: buildMainView(),
+      );
+    }
     onRebuild(context);
     final mq = MediaQuery.of(context);
     final sideInsets = (App.isMobile && mq.orientation == Orientation.landscape)
@@ -347,6 +362,40 @@ class NaviPaneState extends State<NaviPane>
           }),
         ),
       ),
+    );
+  }
+
+  Widget buildDuoNavigation({required bool vertical}) {
+    final items = List<Widget>.generate(widget.paneItems.length, (index) {
+      final selected = index == currentPage;
+      final colors = Theme.of(context).colorScheme;
+      return Semantics(
+        selected: selected,
+        button: true,
+        child: InkWell(
+          onTap: () => updatePage(index),
+          child: SizedBox(
+            height: 44,
+            child: Center(
+              child: Text(
+                widget.paneItems[index].label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: selected ? colors.primary : colors.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: vertical
+          ? Column(mainAxisSize: MainAxisSize.min, children: items)
+          : Row(children: items.map((item) => Expanded(child: item)).toList()),
     );
   }
 
@@ -794,6 +843,7 @@ class _NaviMainViewState extends State<_NaviMainView> {
 
   @override
   Widget build(BuildContext context) {
+    if (App.isIPhoneDuo) return _buildDuo(context);
     var shouldShowAppBar = state.controller.value < 2;
     return Column(
       children: [
@@ -810,6 +860,60 @@ class _NaviMainViewState extends State<_NaviMainView> {
         ),
         if (shouldShowAppBar)
           state.buildBottom().paddingBottom(context.padding.bottom),
+      ],
+    );
+  }
+
+  Widget _buildDuo(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final layout = IPhoneDuoLayout.forSize(media.size);
+    final bottomNavigation = layout == IPhoneDuoLayout.innerPortrait;
+    final railWidth = math.max(44.0, media.viewPadding.right);
+    final contentRightInset = bottomNavigation ? 0.0 : railWidth;
+    final bottomInset = media.viewPadding.bottom;
+    return Stack(
+      children: [
+        Positioned.fill(
+          right: contentRightInset,
+          bottom: bottomNavigation ? 44 + bottomInset : 0,
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.only(
+                  top: media.padding.top,
+                  left: media.padding.left,
+                ),
+                child: state.buildTop(),
+              ),
+              Expanded(
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  removeRight: !bottomNavigation,
+                  removeBottom: bottomNavigation,
+                  child: AnimatedSwitcher(
+                    duration: fastAnimationDuration,
+                    child: state.buildMainViewContent(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          left: bottomNavigation ? 0 : null,
+          right: 0,
+          bottom: bottomNavigation
+              ? 0
+              : bottomInset + (layout == IPhoneDuoLayout.outer ? 32 : 20),
+          width: bottomNavigation ? null : railWidth,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: bottomNavigation ? bottomInset : 0,
+            ),
+            child: state.buildDuoNavigation(vertical: !bottomNavigation),
+          ),
+        ),
       ],
     );
   }

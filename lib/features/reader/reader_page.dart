@@ -53,6 +53,7 @@ import 'package:venera_next/features/reader/volume_controller.dart';
 import 'package:venera_next/features/reader/window_controller.dart';
 import 'package:venera_next/features/reader/platform_effects.dart';
 import 'package:venera_next/foundation/app.dart';
+import 'package:venera_next/foundation/iphone_duo_layout.dart';
 import 'package:venera_next/foundation/app_profile.dart';
 import 'package:venera_next/foundation/tv_reader_policy.dart';
 import 'package:venera_next/foundation/appdata.dart';
@@ -534,7 +535,7 @@ class ReaderState extends State<Reader>
         switch (effect) {
           case ReaderSettingEffect.applyMode:
             if (AppProfile.current.isTv) setImageCacheSize();
-            applyReadingMode(ReaderMode.fromKey(preferences.readerMode));
+            applyReadingMode(_resolveReadingMode(preferences.readerMode));
           case ReaderSettingEffect.detectLayout:
             unawaited(detectLayout());
           case ReaderSettingEffect.updateVolumeListener:
@@ -823,6 +824,7 @@ class ReaderState extends State<Reader>
   int get page => controller.state.page;
   @override
   set page(int value) => controller.setPage(value);
+  @override
   int get chapter => controller.state.chapter;
   bool get jumpToLastPageOnLoad => controller.state.jumpToLastPageOnLoad;
 
@@ -930,6 +932,11 @@ class ReaderState extends State<Reader>
   @override
   bool get isPortrait =>
       MediaQuery.of(context).orientation == Orientation.portrait;
+
+  @override
+  IPhoneDuoLayout? get duoLayout => App.isIPhoneDuo
+      ? IPhoneDuoLayout.forSize(MediaQuery.sizeOf(context))
+      : null;
 
   History? history;
 
@@ -1318,7 +1325,7 @@ class ReaderState extends State<Reader>
           !_usesAutomaticReadingMode) {
         return;
       }
-      final next = ReaderMode.fromKey(preferences.readerMode);
+      final next = _resolveReadingMode(preferences.readerMode);
       if (!mounted || next == mode) return;
       applyReadingMode(next);
       showToast(
@@ -1341,6 +1348,13 @@ class ReaderState extends State<Reader>
       await cleanup;
       attempt.task.finish();
     }
+  }
+
+  ReaderMode _resolveReadingMode(String key) {
+    final selected = ReaderMode.fromKey(key);
+    final hasComicOverride =
+        appdata.settings.comicReaderModeOverride(cid, type.sourceKey) != null;
+    return App.isIPhoneDuo && !hasComicOverride ? selected.paged : selected;
   }
 
   void applyReadingMode(ReaderMode next) {
@@ -1389,7 +1403,7 @@ class ReaderState extends State<Reader>
         page = 1;
       }
     }
-    mode = ReaderMode.fromKey(
+    mode = _resolveReadingMode(
       appdata.settings.readerSettings(cid, type.sourceKey).readerMode,
     );
     history = widget.history;
@@ -2032,7 +2046,13 @@ abstract mixin class ReaderImagePerPageHandler {
 
   late bool _lastOrientation;
 
+  ({int chapter, int spread, int image})? _duoRotationAnchor;
+
   bool get isPortrait;
+
+  IPhoneDuoLayout? get duoLayout => null;
+
+  int get chapter;
 
   int get page;
 
@@ -2058,13 +2078,17 @@ abstract mixin class ReaderImagePerPageHandler {
     singleImageOnFirstPage: showSingleImageOnFirstPage(),
   );
 
-  bool showSingleImageOnFirstPage() => appdata.settings
-      .readerSettings(cid, type.sourceKey)
-      .showSingleImageOnFirstPage;
+  bool showSingleImageOnFirstPage() =>
+      duoLayout == null &&
+      appdata.settings
+          .readerSettings(cid, type.sourceKey)
+          .showSingleImageOnFirstPage;
 
   /// The number of images displayed on one screen
   int get imagesPerPage {
     if (mode.isContinuous) return 1;
+    final duo = duoLayout;
+    if (duo != null) return duo.pagesPerSpread;
     if (isPortrait) {
       return appdata.settings
           .readerSettings(cid, type.sourceKey)
@@ -2091,11 +2115,34 @@ abstract mixin class ReaderImagePerPageHandler {
         imagesPerPage: _lastImagesPerPage,
         singleImageOnFirstPage: showSingleImageOnFirstPage(),
       );
-      page = previousLayout.remapPage(
+      final targetLayout = pageLayout;
+      final previousPage = page;
+      final imageCount = images?.length;
+      var nextPage = previousLayout.remapPage(
         page,
-        pageLayout,
-        imageCount: images?.length,
+        targetLayout,
+        imageCount: imageCount,
       );
+      if (duoLayout != null &&
+          previousPage <= previousLayout.pageCount(imageCount)) {
+        if (_lastImagesPerPage == 1 && currentImagesPerPage == 2) {
+          _duoRotationAnchor = (
+            chapter: chapter,
+            spread: nextPage,
+            image: previousPage,
+          );
+        } else if (_lastImagesPerPage == 2 && currentImagesPerPage == 1) {
+          final anchor = _duoRotationAnchor;
+          if (anchor != null &&
+              anchor.chapter == chapter &&
+              anchor.spread == previousPage &&
+              anchor.image <= targetLayout.pageCount(imageCount)) {
+            nextPage = anchor.image;
+          }
+          _duoRotationAnchor = null;
+        }
+      }
+      page = nextPage;
       _lastImagesPerPage = currentImagesPerPage;
       _lastOrientation = currentOrientation;
     }
@@ -2152,6 +2199,15 @@ enum ReaderMode {
       this == galleryTopToBottom ||
       this == continuousTopToBottom ||
       this == waterfallTopToBottom;
+
+  ReaderMode get paged {
+    if (isGallery) return this;
+    return switch (this) {
+      continuousLeftToRight => galleryLeftToRight,
+      continuousRightToLeft => galleryRightToLeft,
+      _ => galleryTopToBottom,
+    };
+  }
 
   const ReaderMode(this.key);
 

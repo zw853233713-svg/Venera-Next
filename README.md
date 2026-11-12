@@ -4,13 +4,13 @@
   <br>
   <img src="assets/readme_logo.png" alt="VeneraNext" width="200" />
 
-  # VeneraNext
+  # VeneraNext · iPhone Duo
 
   ![Flutter](https://img.shields.io/badge/Flutter-3.41.4-02569B?logo=flutter&logoColor=white&style=flat-square)
-  [![Release](https://img.shields.io/github/v/release/CyrilPeng/venera-next?label=Release&color=10B981&style=flat-square)](https://github.com/CyrilPeng/venera-next/releases/latest)
+  [![Upstream release](https://img.shields.io/github/v/release/CyrilPeng/venera-next?label=Upstream%20release&color=10B981&style=flat-square)](https://github.com/CyrilPeng/venera-next/releases/latest)
   ![License](https://img.shields.io/badge/License-GPL--3.0-10B981?style=flat-square)
   <br>
-  [![Downloads](https://img.shields.io/github/downloads/CyrilPeng/venera-next/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=CyrilPeng&repo=venera-next)
+  [![Upstream downloads](https://img.shields.io/github/downloads/CyrilPeng/venera-next/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=CyrilPeng&repo=venera-next)
   [![爱发电](https://img.shields.io/badge/爱发电-支持我-ff69b4?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyMS4zNWwtMS40NS0xLjMyQzUuNCAxNS4zNiAyIDEyLjI4IDIgOC41IDIgNS40MiA0LjQyIDMgNy41IDNjMS43NCAwIDMuNDEuODEgNC41IDIuMDlDMTMuMDkgMy44MSAxNC43NiAzIDE2LjUgMyAxOS41OCAzIDIyIDUuNDIgMjIgOC41YzAgMy43OC0zLjQgNi44Ni04LjU1IDExLjU0TDEyIDIxLjM1eiIvPjwvc3ZnPg==)](https://ifdian.net/a/cyril)
 
   <a href="https://trendshift.io/repositories/140830?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-140830" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/140830" alt="VeneraNext 的 Trendshift 项目徽章" width="250" height="55" /></a>
@@ -23,22 +23,45 @@
 
 ---
 
+## iPhone Duo 适配
+
+本仓库是 [CyrilPeng/Venera-Next v1.18.3](https://github.com/CyrilPeng/Venera-Next/tree/v1.18.3) 的 iPhone Duo 适配分支。适配修改日期为 **2026-11-12**，源码按 [GPL-3.0](LICENSE) 发布。
+
+- 折叠外屏在右下角显示纵排文字导航。展开竖屏时导航移到底部。展开横屏时主页分两列，导航位于右下角。
+- 阅读器在展开横屏时默认显示左右双页，折叠或竖屏时显示单页。切换布局时保留当前阅读位置，图片按原比例缩放。
+- 阅读菜单在屏幕底部弹出。适配了新版 iOS 的文件选择器，并用本地 CBZ 测试了导入和阅读。
+
+已在 iPhone Duo 模拟器上验证三种布局和单双页切换。真机已安装并启动构建 250。
+
+### 从源码构建 Duo 版
+
+本仓库提供适配源码。构建使用 **Flutter 3.41.4、Xcode 27.2 和 CocoaPods**，iOS 部署目标为 **15.0**。安装 Rustup 后，为 iPhone 真机准备原生依赖所需的 Rust 工具链和目标。
+
+```sh
+rustup toolchain install 1.92.0 --profile minimal --target aarch64-apple-ios
+rustup toolchain install stable --profile minimal --target aarch64-apple-ios
+flutter pub get --enforce-lockfile
+flutter build ios --release --no-codesign
+```
+
+连接 iPhone 后，在 Xcode 中打开 `ios/Runner.xcworkspace`。在 Runner 的 **Signing & Capabilities** 中选择自己的开发团队和 Bundle Identifier，然后选中 iPhone Duo 运行。要在 Apple 芯片 Mac 上使用模拟器，为两个 Rust 工具链添加 `aarch64-apple-ios-sim`，启动 iPhone Duo 模拟器，再运行 `flutter run` 并选择该模拟器。
+
 ## 项目介绍
 
 [VeneraNext](https://github.com/CyrilPeng/venera-next) 是基于 [Venera](https://github.com/venera-app/venera) 持续开发的 Flutter 漫画阅读器，支持 **Android、Android TV、iOS、Windows、Linux 和 macOS**，另提供 **HarmonyOS 测试版**。
 
-本分支围绕“少一点打断，多一点阅读”打磨日常体验：瀑布流跨章连读不用退出，长按收藏省去选择收藏夹的步骤，夜间和墨水屏设备各有阅读设置。本地导入、离线下载、阅读统计与多设备同步，让找书、看漫画和追连载更方便。
+上游 Venera-Next 围绕“少一点打断，多一点阅读”打磨日常体验：瀑布流跨章连读不用退出，长按收藏省去选择收藏夹的步骤，夜间和墨水屏设备各有阅读设置。本地导入、离线下载、阅读统计与多设备同步，让找书、看漫画和追连载更方便。
 
 原项目的 JavaScript 漫画源扩展、本地阅读、搜索与分类、收藏下载，以及按源提供的登录、评论和评分能力继续保留。
 
-**快速入口：** [下载安装](#下载安装) · [使用说明](#使用说明) · [编写漫画源](doc/api/comic_source.zh.md) · [JavaScript API](doc/api/js.zh.md) · [更新日志](CHANGELOG.md)
+**快速入口：** [上游下载安装](#下载安装) · [使用说明](#使用说明) · [编写漫画源](doc/api/comic_source.zh.md) · [JavaScript API](doc/api/js.zh.md) · [更新日志](CHANGELOG.md)
 
 > [!IMPORTANT]
 > 本仓库只维护阅读器本体和扩展运行环境，不提供、内置、托管或推荐漫画源。网络漫画源需由用户自行合法配置，具体内容及源站可用性由相应扩展和服务决定。
 
 <div align="center">
   <a href="https://github.com/CyrilPeng/Venera-Next">
-    <img alt="GitHub 主仓库" src="https://img.shields.io/badge/GitHub-主仓库-181717?style=for-the-badge&logo=github&logoColor=white" /></a>
+    <img alt="GitHub 上游仓库" src="https://img.shields.io/badge/GitHub-上游仓库-181717?style=for-the-badge&logo=github&logoColor=white" /></a>
   <a href="https://gitee.com/CyrilPeng/venera-next">
     <img alt="Gitee 国内镜像" src="https://img.shields.io/badge/Gitee-国内镜像-C71D23?style=for-the-badge&logo=gitee&logoColor=white" /></a>
 </div>
@@ -46,6 +69,8 @@
 ---
 
 ## 软件截图
+
+以下为上游 Venera-Next 的界面截图。
 
 | 主页：阅读历史、稍后阅读与追更 | 漫画详情页 |
 |---|---|
@@ -89,6 +114,8 @@
 ---
 
 ## 下载安装
+
+本节的安装包来自上游 Venera-Next。iPhone Duo 适配版可按上文[从源码构建 Duo 版](#从源码构建-duo-版)。
 
 ### Android 手机与平板
 

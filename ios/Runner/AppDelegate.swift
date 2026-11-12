@@ -4,29 +4,56 @@ import UniformTypeIdentifiers
 import Foundation // 添加此行
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private let directoryAccess = ScopedDirectoryAccess()
   private var directoryTerminationObserver: NSObjectProtocol?
 
   // 定义插件通道名称
   private var directoryPicker: DirectoryPicker?
 
+  // The iOS file selector still looks for its presenter on the app delegate.
+  override var window: UIWindow? {
+    get { activeSceneWindow ?? super.window }
+    set { super.window = newValue }
+  }
+
+  private var activeSceneWindow: UIWindow? {
+    UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .filter { $0.activationState == .foregroundActive }
+      .flatMap { $0.windows }
+      .first { $0.isKeyWindow }
+  }
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
     directoryTerminationObserver = NotificationCenter.default.addObserver(
       forName: UIApplication.willTerminateNotification, object: nil, queue: .main
     ) { [weak self] _ in self?.directoryAccess.close() }
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
 
-    guard let controller = window?.rootViewController as? FlutterViewController else {
-          fatalError("rootViewController is not of type FlutterViewController")
-    }
-
-    let methodChannel = FlutterMethodChannel(name: "venera/method_channel", binaryMessenger: controller.binaryMessenger)
+  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let methodChannel = FlutterMethodChannel(
+      name: "venera/method_channel",
+      binaryMessenger: engineBridge.applicationRegistrar.messenger()
+    )
     methodChannel.setMethodCallHandler { (call, result) in
-      if call.method == "getProxy" {
+      if call.method == "isIPhoneDuo" {
+        #if targetEnvironment(simulator)
+        let model = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"]
+        #else
+        var system = utsname()
+        uname(&system)
+        let model = withUnsafeBytes(of: &system.machine) {
+          String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self)
+        }
+        #endif
+        result(model == "iPhone19,4")
+      } else if call.method == "getProxy" {
         if let proxySettings = CFNetworkCopySystemProxySettings()?.takeUnretainedValue() as NSDictionary?,
           let dict = proxySettings.object(forKey: kCFNetworkProxiesHTTPProxy) as? NSDictionary,
           let host = dict.object(forKey: kCFNetworkProxiesHTTPProxy) as? String,
@@ -66,7 +93,6 @@ import Foundation // 添加此行
       }
     }
 
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
   private func getDirectoryPath(result: @escaping FlutterResult) {
